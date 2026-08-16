@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>XB4 单词闯关 · U6 版（在线版）</title>
+  <meta name="description" content="XB4 英语单词闯关在线版：拼写挑战、听音选义、混合训练、错词本与 SM-2 间隔重复，浏览器直接玩，支持微信/QQ/GitHub 好友分享。" />
+  <meta name="theme-color" content="#4a6cf7" />
+  <meta name="author" content="晨曦英语 · 胡老师" />
+  <!-- 强制禁止浏览器/中间代理缓存，确保每次都能拉到最新代码 -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234a6cf7'/%3E%3Ctext x='16' y='22' font-size='18' font-family='Arial' font-weight='bold' text-anchor='middle' fill='white'%3EX%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="assets/css/style.css?v=20260814T070000" />
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><span class="logo">X</span> XB4 单词闯关</div>
+    <div class="right">
+      <button class="iconbtn" onclick="showGuide()">❓ 帮助</button>
+      <button class="iconbtn" onclick="resetProgressConfirm()">🗑 重置</button>
+      <button class="iconbtn" onclick="goHome()">🏠 首页</button>
+      <button class="iconbtn share" onclick="openShare()">🔗 分享</button>
+    </div>
+  </div>
+
+  <!-- 首页 -->
+  <section class="screen active" id="home">
+    <div class="hero">
+      <h1>用<span class="hl">闯关</span>的方式<br/>把 XB4 单词记牢</h1>
+      <p>拼写挑战 · 听音选义 · 混合训练 · 错词复习，浏览器直接玩，成绩自动保存。</p>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="diffbar">
+      <span class="lab">难度</span>
+      <div class="seg" id="diffSeg">
+        <button data-k="easy" onclick="setDiff('easy')">基础</button>
+        <button data-k="normal" onclick="setDiff('normal')">标准</button>
+        <button data-k="hard" onclick="setDiff('hard')">进阶</button>
+      </div>
+    </div>
+    <div class="diffdesc" id="diffDesc"></div>
+    <!-- 时间闯关 / 背景音乐 开关 -->
+    <div class="diffbar" style="margin-bottom:8px">
+      <span class="lab">⏱ 计时闯关</span>
+      <button class="toggle" id="timerToggle" onclick="toggleTimerMode()">开</button>
+      <span class="lab" style="margin-left:14px">🎵 背景音乐</span>
+      <button class="toggle" id="bgmToggle" onclick="toggleBgm()">关</button>
+    </div>
+    <div class="modes">
+      <div class="mode" onclick="startMode('spell')"><div class="ic">✍️</div><h3>拼写挑战</h3><p>点字母拼出单词 / 句子词，训练大小写规范</p></div>
+      <div class="mode" onclick="startMode('choose')"><div class="ic">👂</div><h3>听音选义</h3><p>听发音，选出正确释义</p></div>
+      <div class="mode" onclick="startMode('mix')"><div class="ic">🎲</div><h3>混合训练</h3><p>随机拼写或选择，贴近真实语境</p></div>
+      <div class="mode" onclick="startMode('review')"><div class="ic">🔁</div><h3>错词复习</h3><p>只练答错 / 到期词，间隔重复</p><span class="badge" id="reviewBadge"></span></div>
+      <div class="mode full" onclick="showVocab()"><div class="ic">📖</div><h3>词汇总览</h3><p>21 个核心词条、多义项、例句与高考真题标注一屏看全</p></div>
+    </div>
+    <button class="iconbtn" style="width:100%;margin-top:12px" onclick="openRank()">🏆 时间排行榜（本机最佳通关时间）</button>
+  </section>
+
+  <!-- 练习 -->
+  <section class="screen" id="play">
+    <div class="progress"><i id="progBar"></i></div>
+    <div class="pinfo"><span id="progText"></span><span id="modeText"></span></div>
+    <!-- 时间闯关：倒计时条 + 道具栏 -->
+    <div class="timerbar" id="timerBar" style="display:none"><i id="timerFill" class="ok"></i><b id="timerText">--</b></div>
+    <div class="itembar" id="itemBar" style="display:none"></div>
+    <div class="qcard" id="qcard"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="submit" id="submitBtn" onclick="onSubmit()">提交答案</button>
+    <div class="backlink" onclick="goHome()">← 返回首页</div>
+  </section>
+
+  <!-- 结算 -->
+  <section class="screen" id="result">
+    <div class="result" id="resultBox"></div>
+    <div class="backlink" onclick="goHome()">← 返回首页</div>
+  </section>
+
+  <!-- 词表 -->
+  <section class="screen" id="vocab">
+    <h2 style="font-size:22px;font-weight:900;margin:8px 0">📖 词汇总览</h2>
+    <div class="vlist" id="vlist"></div>
+    <div class="backlink" onclick="goHome()">← 返回首页</div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="mask" id="guideMask">
+  <div class="modal guide">
+    <h3 id="guideTitle">🎮 认识四个模式</h3>
+    <p id="guideDesc" style="min-height:84px;line-height:1.7"></p>
+    <div class="dots" id="guideDots"></div>
+    <div class="guide-btns">
+      <button class="iconbtn" onclick="closeGuide()">跳过</button>
+      <button class="submit" style="flex:1;margin-top:0" id="guideNext" onclick="nextGuide()">下一步 →</button>
+    </div>
+  </div>
+</div>
+<div class="mask" id="rankMask">
+  <div class="modal">
+    <h3>🏆 时间排行榜</h3>
+    <p>本机各词最佳通关时间（好友对比：分享你的纪录，对方打开游戏即可挑战）</p>
+    <div id="rankList" style="max-height:55vh;overflow:auto"></div>
+    <button class="close" onclick="closeRank()">关闭</button>
+  </div>
+</div>
+<div class="mask" id="shareMask">
+  <div class="modal">
+    <h3>📤 分享给好友</h3>
+    <p>微信 / QQ / GitHub · 手机电脑平板均可打开</p>
+    <div class="share-btns">
+      <button class="wx" onclick="shareWeChat()">💬 微信扫码分享</button>
+      <button class="qq" onclick="shareQQ()">🐧 QQ 分享</button>
+      <button class="gh" onclick="shareGitHub()">🐙 复制链接到 GitHub</button>
+      <button class="copy" onclick="copyLink()">🔗 复制链接</button>
+      <button class="mail" onclick="shareMail()">✉️ 邮件分享</button>
+    </div>
+    <button class="close" onclick="closeShare()">关闭</button>
+  </div>
+</div>
+
+<!-- 资源与逻辑（经典脚本，按依赖顺序加载，支持双击打开或本地服务器）
+     每个资源带 ?v= 版本号：部署后浏览器/ CDN 强制拉取新文件，避免缓存导致修复不生效 -->
+<script src="assets/js/data.js?v=20260814T070000"></script>
+<script src="assets/js/core.js?v=20260814T070000"></script>
+<script src="assets/js/storage.js?v=20260814T070000"></script>
+<script src="assets/js/audio.js?v=20260814T070000"></script>
+<script src="assets/js/app.js?v=20260814T070000"></script>
+</body>
+</html>
